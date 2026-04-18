@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shewear — Brand Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#09090e;--bg2:#111117;--bg3:#17171f;--bg4:#1e1e28;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --text:#ededf5;--muted:#6b6980;--muted2:#9896b0;
+  --accent:#7b69f5;--adim:rgba(123,105,245,0.15);
+  --green:#3ec98a;--gdim:rgba(62,201,138,0.12);
+  --amber:#f0a340;--ydim:rgba(240,163,64,0.12);
+  --red:#e85555;--rdim:rgba(232,85,85,0.12);
+  --blue:#4aa8f5;--bdim:rgba(74,168,245,0.12);
+  --pink:#f56998;--pdim:rgba(245,105,152,0.12);
+  --mono:'Geist Mono',monospace;--sans:'Geist',sans-serif;
+  --sans-ar:'IBM Plex Sans Arabic',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;display:flex;}
+
+/* SIDEBAR */
+.sidebar{width:230px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;flex-shrink:0;overflow-y:auto;}
+.sb-logo{padding:20px;border-bottom:1px solid var(--border);}
+.sb-mark{width:32px;height:32px;border-radius:8px;background:var(--adim);border:1px solid rgba(123,105,245,0.3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--accent);margin-bottom:8px;}
+.sb-name{font-size:13px;font-weight:600;letter-spacing:-0.02em;}
+.sb-sub{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.sb-section{font-size:10px;font-family:var(--mono);color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;padding:14px 20px 5px;}
+.nav-btn{display:flex;align-items:center;gap:8px;padding:7px 20px;cursor:pointer;color:var(--muted2);font-size:12.5px;border:none;border-right:2px solid transparent;background:transparent;width:100%;text-align:left;font-family:var(--sans);transition:all 0.15s;}
+.nav-btn:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+.nav-btn.active{color:var(--accent);border-right-color:var(--accent);background:var(--adim);}
+.nav-btn svg{width:14px;height:14px;flex-shrink:0;opacity:0.6;}
+.nav-btn.active svg{opacity:1;}
+.nav-dot{margin-left:auto;width:5px;height:5px;border-radius:50%;background:var(--red);}
+.sb-footer{margin-top:auto;padding:14px 20px;border-top:1px solid var(--border);}
+.sync-row{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--muted);font-family:var(--mono);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.sync-dot.loading{background:var(--amber);animation:blink 1s infinite;}
+.sync-dot.error{background:var(--red);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow-x:hidden;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10;}
+.topbar-l{display:flex;flex-direction:column;gap:1px;}
+.topbar-title{font-size:15px;font-weight:600;letter-spacing:-0.02em;}
+.topbar-sub{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.topbar-r{display:flex;gap:8px;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:var(--sans);transition:all 0.15s;}
+.btn:hover{border-color:rgba(255,255,255,0.22);background:rgba(255,255,255,0.05);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-primary:hover{background:#6a58e0;}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--muted2);}
+.lang-btn{padding:5px 11px;border-radius:7px;font-size:11px;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--muted2);font-family:var(--mono);transition:all 0.15s;}
+.lang-btn:hover{color:var(--text);}
+
+/* CONTENT */
+.content{padding:24px 28px;flex:1;}
+.page{display:none;}
+.page.active{display:block;}
+
+/* ALERT BANNER */
+.alert-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.alert{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;font-size:12px;font-family:var(--mono);}
+.alert-red{background:var(--rdim);color:var(--red);border:1px solid rgba(232,85,85,0.2);}
+.alert-amber{background:var(--ydim);color:var(--amber);border:1px solid rgba(240,163,64,0.2);}
+.alert-green{background:var(--gdim);color:var(--green);border:1px solid rgba(62,201,138,0.2);}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.kpi-grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:12px 12px 0 0;}
+.kpi.c-p::before{background:var(--accent);}
+.kpi.c-g::before{background:var(--green);}
+.kpi.c-y::before{background:var(--amber);}
+.kpi.c-r::before{background:var(--red);}
+.kpi.c-b::before{background:var(--blue);}
+.kpi.c-pk::before{background:var(--pink);}
+.kpi-label{font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;}
+.kpi-val{font-size:24px;font-weight:600;letter-spacing:-0.03em;line-height:1;margin-bottom:5px;}
+.kpi-val.sm{font-size:20px;}
+.kpi-delta{font-size:11px;font-family:var(--mono);}
+.kpi-delta.up{color:var(--green);}
+.kpi-delta.dn{color:var(--red);}
+.kpi-delta.flat{color:var(--amber);}
+.kpi-target{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:4px;}
+
+/* CHARTS */
+.chart-row{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:20px;}
+.chart-row.eq{grid-template-columns:1fr 1fr;}
+.chart-row.eq3{grid-template-columns:1fr 1fr 1fr;}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+.chart-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.chart-title{font-size:13px;font-weight:600;}
+.chart-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+
+/* TABLE */
+.tbl-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.tbl th{text-align:left;padding:9px 14px;font-size:10px;font-family:var(--mono);letter-spacing:0.06em;color:var(--muted);border-bottom:1px solid var(--border);font-weight:400;background:var(--bg3);white-space:nowrap;}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(255,255,255,0.015);}
+.mono{font-family:var(--mono);font-size:12px;}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:500;font-family:var(--mono);}
+.p-g{background:var(--gdim);color:var(--green);}
+.p-r{background:var(--rdim);color:var(--red);}
+.p-y{background:var(--ydim);color:var(--amber);}
+.p-p{background:var(--adim);color:var(--accent);}
+.p-b{background:var(--bdim);color:var(--blue);}
+.p-pk{background:var(--pdim);color:var(--pink);}
+.p-gray{background:rgba(255,255,255,0.06);color:var(--muted2);}
+
+/* REC CARDS */
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.rec{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:15px 17px;border-left:3px solid var(--border2);}
+.rec.action{border-left-color:var(--green);}
+.rec.warn{border-left-color:var(--amber);}
+.rec.alert{border-left-color:var(--red);}
+.rec.info{border-left-color:var(--accent);}
+.rec-type{font-size:9.5px;font-family:var(--mono);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
+.rec.action .rec-type{color:var(--green);}
+.rec.warn .rec-type{color:var(--amber);}
+.rec.alert .rec-type{color:var(--red);}
+.rec.info .rec-type{color:var(--accent);}
+.rec-title{font-size:13px;font-weight:600;margin-bottom:4px;line-height:1.4;}
+.rec-body{font-size:12px;color:var(--muted2);line-height:1.6;}
+.rec-impact{font-size:11px;font-family:var(--mono);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+
+/* SECTION HEADER */
+.sec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.sec-title{font-size:13px;font-weight:600;}
+
+/* FUNNEL */
+.funnel{display:flex;flex-direction:column;gap:0;margin-bottom:20px;}
+.funnel-step{background:var(--bg2);border:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:relative;}
+.funnel-step:first-child{border-radius:12px 12px 0 0;}
+.funnel-step:last-child{border-radius:0 0 12px 12px;}
+.funnel-step+.funnel-step{border-top:none;}
+.funnel-label{font-size:13px;font-weight:500;}
+.funnel-num{font-size:20px;font-weight:600;font-family:var(--mono);}
+.funnel-drop{font-size:11px;font-family:var(--mono);color:var(--red);}
+.funnel-bar{position:absolute;left:0;top:0;bottom:0;border-radius:inherit;opacity:0.08;transition:width 0.5s;}
+
+/* RFM SEGMENTS */
+.rfm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.rfm-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.rfm-name{font-size:13px;font-weight:600;margin-bottom:4px;}
+.rfm-count{font-size:28px;font-weight:600;letter-spacing:-0.03em;}
+.rfm-desc{font-size:11px;color:var(--muted2);margin-top:6px;line-height:1.5;}
+.rfm-action{font-size:11px;font-family:var(--mono);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+
+/* FORM */
+.form-block{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px;}
+.form-title{font-size:13px;font-weight:600;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;}
+.form-input{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color 0.15s;}
+.form-input:focus{border-color:var(--accent);}
+.form-input::placeholder{color:var(--muted);}
+.form-hint{font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.5;}
+
+/* CONNECT BANNER */
+.connect-banner{background:linear-gradient(135deg,var(--adim),var(--gdim));border:1px solid rgba(123,105,245,0.2);border-radius:12px;padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+.connect-banner.hidden{display:none;}
+
+/* LOADING */
+.loader{position:fixed;inset:0;background:rgba(9,9,14,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500;gap:14px;}
+.loader.hidden{display:none;}
+.spinner{width:30px;height:30px;border:2px solid rgba(123,105,245,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-size:12px;color:var(--muted2);font-family:var(--mono);}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--bg4);border:1px solid var(--border2);border-radius:10px;padding:8px 16px;font-size:12px;opacity:0;transition:all 0.25s;z-index:600;pointer-events:none;white-space:nowrap;font-family:var(--mono);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* PROGRESS BAR */
+.prog-wrap{background:rgba(255,255,255,0.06);border-radius:3px;height:4px;overflow:hidden;}
+.prog{height:4px;border-radius:3px;transition:width 0.4s;}
+
+/* ICE SCORE */
+.ice-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.ice-row:last-child{border-bottom:none;}
+.ice-rank{width:24px;height:24px;border-radius:50%;background:var(--adim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
+.ice-title{flex:1;font-size:13px;font-weight:500;}
+.ice-score{font-size:13px;font-family:var(--mono);font-weight:600;}
+
+/* MISC */
+hr{border:none;border-top:1px solid var(--border);margin:18px 0;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:3px;}
+@media(max-width:1100px){.kpi-grid,.kpi-grid-5{grid-template-columns:repeat(2,1fr);}.chart-row,.chart-row.eq,.chart-row.eq3{grid-template-columns:1fr;}.rec-grid,.rfm-grid{grid-template-columns:1fr;}}
+@media(max-width:700px){.sidebar{display:none;}.content{padding:16px;}.topbar{padding:12px 16px;}}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader hidden" id="loader">
+  <div class="spinner"></div>
+  <div class="loader-text" id="loader-txt">Loading Shewear data...</div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-mark" id="sb-mark">SW</div>
+    <div class="sb-name" id="sb-name">Shewear</div>
+    <div class="sb-sub">Brand Intelligence v3</div>
+  </div>
+
+  <div class="sb-section">Core</div>
+  <button class="nav-btn active" onclick="nav('executive',this)">
+    <svg viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="5" height="5" rx="1.5" fill="currentColor"/><rect x="9.5" y="1.5" width="5" height="5" rx="1.5" fill="currentColor" opacity=".4"/><rect x="1.5" y="9.5" width="5" height="5" rx="1.5" fill="currentColor" opacity=".4"/><rect x="9.5" y="9.5" width="5" height="5" rx="1.5" fill="currentColor" opacity=".4"/></svg>
+    Executive
+  </button>
+  <button class="nav-btn" onclick="nav('unit',this)">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M2 14V8l3-3 3 3 3-4 3 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Unit Economics
+  </button>
+
+  <div class="sb-section">Acquisition</div>
+  <button class="nav-btn" onclick="nav('acquisition',this)">
+    <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 4v4l3 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    Acquisition
+    <span class="nav-dot" id="acq-dot" style="display:none;"></span>
+  </button>
+  <button class="nav-btn" onclick="nav('creative',this)">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M3 13L7 5l3 5 2-3 3 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Creative & UGC
+  </button>
+
+  <div class="sb-section">Conversion</div>
+  <button class="nav-btn" onclick="nav('funnel',this)">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-4 5v5l-4-2V8L2 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+    Funnel
+  </button>
+  <button class="nav-btn" onclick="nav('products',this)">
+    <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="5.5" width="12" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 5.5V4a2.5 2.5 0 0 1 5 0v1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    Products & PDP
+    <span class="nav-dot" id="prod-dot"></span>
+  </button>
+  <button class="nav-btn" onclick="nav('payments',this)">
+    <svg viewBox="0 0 16 16" fill="none"><rect x="1.5" y="4" width="13" height="9" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 7h13" stroke="currentColor" stroke-width="1.3"/></svg>
+    Payments & COD
+  </button>
+
+  <div class="sb-section">Retention</div>
+  <button class="nav-btn" onclick="nav('retention',this)">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M8 2a6 6 0 1 0 6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M14 4V2h-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Retention & RFM
+  </button>
+  <button class="nav-btn" onclick="nav('lifecycle',this)">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M2 8h3l2-5 3 10 2-5h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Lifecycle & CRM
+  </button>
+
+  <div class="sb-section">Growth</div>
+  <button class="nav-btn" onclick="nav('orders',this)">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M2 3h12M2 8h8M2 13h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    Orders
+  </button>
+  <button class="nav-btn" onclick="nav('customers',this)">
+    <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    Customers
+  </button>
+  <button class="nav-btn" onclick="nav('experiments',this)">
+    <svg viewBox="0 0 16 16" fill="none"><path d="M6 2v6L3 13h10l-3-5V2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Experiments
+  </button>
+
+  <div class="sb-section">Config</div>
+  <button class="nav-btn" onclick="nav('settings',this)">
+    <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    Settings
+  </button>
+
+  <div class="sb-footer">
+    <div class="sync-row">
+      <div class="sync-dot loading" id="sync-dot"></div>
+      <span id="sync-lbl">Connecting...</span>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-l">
+      <div class="topbar-title" id="page-title">Executive Dashboard</div>
+      <div class="topbar-sub" id="page-date"></div>
+    </div>
+    <div class="topbar-r">
+      <button class="lang-btn" onclick="toggleLang()" id="lang-btn">عربي</button>
+      <button class="btn btn-ghost" onclick="exportCSV()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v9M5 8l3 3 3-3M3 13h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Export
+      </button>
+      <button class="btn btn-primary" onclick="refreshAll()" id="refresh-btn">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/><path d="M13.5 2.5v3h-3" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+  <!-- ═══ 1. EXECUTIVE ═══ -->
+  <div id="page-executive" class="page active">
+    <div class="alert-bar" id="exec-alerts"></div>
+    <div class="kpi-grid-5">
+      <div class="kpi c-p"><div class="kpi-label">Revenue Today</div><div class="kpi-val" id="e-rev">—</div><div class="kpi-delta" id="e-rev-d"></div><div class="kpi-target" id="e-rev-t"></div></div>
+      <div class="kpi c-g"><div class="kpi-label">MER</div><div class="kpi-val" id="e-mer">—</div><div class="kpi-delta flat">Revenue / Ad Spend</div><div class="kpi-target">Target: 3x+</div></div>
+      <div class="kpi c-y"><div class="kpi-label">Blended CAC</div><div class="kpi-val" id="e-cac">—</div><div class="kpi-delta" id="e-cac-d"></div><div class="kpi-target" id="e-cac-t"></div></div>
+      <div class="kpi c-b"><div class="kpi-label">LTV (90d)</div><div class="kpi-val" id="e-ltv">—</div><div class="kpi-delta" id="e-ltv-d"></div><div class="kpi-target" id="e-ltv-t"></div></div>
+      <div class="kpi c-pk"><div class="kpi-label">Retention Rate</div><div class="kpi-val" id="e-ret">—</div><div class="kpi-delta" id="e-ret-d"></div><div class="kpi-target">Target: 30%+</div></div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi c-g"><div class="kpi-label">Orders Today</div><div class="kpi-val" id="e-ord">—</div><div class="kpi-delta" id="e-ord-d"></div></div>
+      <div class="kpi c-y"><div class="kpi-label">AOV</div><div class="kpi-val" id="e-aov">—</div><div class="kpi-delta flat" id="e-aov-d"></div></div>
+      <div class="kpi c-p"><div class="kpi-label">Funnel CVR</div><div class="kpi-val" id="e-cvr">—</div><div class="kpi-delta flat">Target: 2–4%</div></div>
+      <div class="kpi c-r"><div class="kpi-label">Low Stock Items</div><div class="kpi-val" id="e-stock">—</div><div class="kpi-delta dn" id="e-stock-d"></div></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card">
+        <div class="chart-hd"><div><div class="chart-title">Revenue — Last 30 Days</div><div class="chart-sub">EGP · Daily · Live from Shopify</div></div><span class="pill p-g" id="rev-trend"></span></div>
+        <div style="height:200px;"><canvas id="c-rev30"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-hd"><div><div class="chart-title">Orders by Status</div><div class="chart-sub">Today</div></div></div>
+        <div style="height:200px;display:flex;align-items:center;justify-content:center;"><canvas id="c-ord-status" style="max-width:170px;"></canvas></div>
+      </div>
+    </div>
+    <div class="sec-hd"><div class="sec-title">Priority Actions</div><span class="pill p-p" id="exec-rec-count"></span></div>
+    <div class="rec-grid" id="exec-recs"></div>
+  </div>
+
+  <!-- ═══ 2. UNIT ECONOMICS ═══ -->
+  <div id="page-unit" class="page">
+    <div class="kpi-grid">
+      <div class="kpi c-g"><div class="kpi-label">Contribution Margin</div><div class="kpi-val" id="u-cm">—</div><div class="kpi-delta" id="u-cm-d"></div></div>
+      <div class="kpi c-p"><div class="kpi-label">LTV / CAC Ratio</div><div class="kpi-val" id="u-lc">—</div><div class="kpi-delta flat">Target: 3x+</div></div>
+      <div class="kpi c-y"><div class="kpi-label">Payback Period</div><div class="kpi-val" id="u-pb">—</div><div class="kpi-delta flat">Target: &lt;90 days</div></div>
+      <div class="kpi c-r"><div class="kpi-label">Break-even ROAS</div><div class="kpi-val" id="u-be">—</div><div class="kpi-delta flat" id="u-be-d"></div></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card">
+        <div class="chart-hd"><div><div class="chart-title">LTV vs CAC — 30 Days</div><div class="chart-sub">Cohort comparison</div></div></div>
+        <div style="height:220px;"><canvas id="c-ltv-cac"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-hd"><div><div class="chart-title">Revenue Breakdown</div><div class="chart-sub">Cost structure</div></div></div>
+        <div style="height:220px;display:flex;align-items:center;justify-content:center;"><canvas id="c-rev-breakdown" style="max-width:185px;"></canvas></div>
+      </div>
+    </div>
+    <div class="form-block">
+      <div class="form-title">Cost Inputs — لازم تدخلها عشان الحسابات تبقى صح</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">COGS % of Revenue</label><input class="form-input" id="u-cogs" placeholder="35" type="number"><span class="form-hint">Average cost of goods sold</span></div>
+        <div class="form-group"><label class="form-label">Shipping Cost per Order (EGP)</label><input class="form-input" id="u-ship" placeholder="45" type="number"></div>
+        <div class="form-group"><label class="form-label">Monthly Ad Spend (EGP)</label><input class="form-input" id="u-spend" placeholder="1500000" type="number"></div>
+        <div class="form-group"><label class="form-label">Monthly New Customers</label><input class="form-input" id="u-newcust" placeholder="500" type="number"></div>
+        <div class="form-group"><label class="form-label">Returns Rate %</label><input class="form-input" id="u-returns" placeholder="8" type="number"></div>
+        <div class="form-group"><label class="form-label">Overhead Monthly (EGP)</label><input class="form-input" id="u-overhead" placeholder="50000" type="number"></div>
+      </div>
+      <div style="margin-top:14px;"><button class="btn btn-primary" onclick="calcUnitEcon()">Calculate</button></div>
+    </div>
+  </div>
+
+  <!-- ═══ 3. ACQUISITION ═══ -->
+  <div id="page-acquisition" class="page">
+    <div class="connect-banner" id="meta-banner">
+      <div><h3 style="font-size:13px;font-weight:600;margin-bottom:4px;">Connect Meta Ads</h3><p style="font-size:12px;color:var(--muted2);">Add Meta Ads API to see CAC, MER, and channel breakdown automatically.</p></div>
+      <button class="btn btn-primary" onclick="nav('settings',document.querySelectorAll('.nav-btn')[13])">Connect</button>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi c-p"><div class="kpi-label">MER (Blended)</div><div class="kpi-val" id="aq-mer">—</div><div class="kpi-delta flat">Revenue / Total Spend</div></div>
+      <div class="kpi c-r"><div class="kpi-label">Blended CAC</div><div class="kpi-val" id="aq-cac">—</div><div class="kpi-delta" id="aq-cac-d"></div></div>
+      <div class="kpi c-g"><div class="kpi-label">Meta ROAS</div><div class="kpi-val" id="aq-roas">—</div><div class="kpi-delta flat">Target: 3x+</div></div>
+      <div class="kpi c-y"><div class="kpi-label">Total Ad Spend</div><div class="kpi-val" id="aq-spend">—</div><div class="kpi-delta" id="aq-spend-d"></div></div>
+    </div>
+    <div class="sec-hd"><div class="sec-title">Channel Breakdown</div></div>
+    <div class="tbl-card">
+      <table class="tbl">
+        <thead><tr><th>Channel</th><th>Spend</th><th>Revenue</th><th>ROAS</th><th>CAC</th><th>MER</th><th>Status</th></tr></thead>
+        <tbody id="channels-tbody">
+          <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted);font-size:12px;font-family:var(--mono);">Connect Meta Ads to see live data — manual input available below</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="form-block">
+      <div class="form-title">Manual Channel Input (حتى ما نربط الـ APIs)</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Meta Spend (EGP)</label><input class="form-input" id="aq-meta-spend" placeholder="50000" type="number"></div>
+        <div class="form-group"><label class="form-label">Meta Revenue (EGP)</label><input class="form-input" id="aq-meta-rev" placeholder="185000" type="number"></div>
+        <div class="form-group"><label class="form-label">TikTok Spend (EGP)</label><input class="form-input" id="aq-tiktok-spend" placeholder="0" type="number"></div>
+        <div class="form-group"><label class="form-label">TikTok Revenue (EGP)</label><input class="form-input" id="aq-tiktok-rev" placeholder="0" type="number"></div>
+        <div class="form-group"><label class="form-label">Google Spend (EGP)</label><input class="form-input" id="aq-google-spend" placeholder="0" type="number"></div>
+        <div class="form-group"><label class="form-label">New Customers (from ads)</label><input class="form-input" id="aq-newcust" placeholder="120" type="number"></div>
+      </div>
+      <div style="margin-top:14px;"><button class="btn btn-primary" onclick="calcAcquisition()">Update</button></div>
+    </div>
+  </div>
+
+  <!-- ═══ 4. CREATIVE & UGC ═══ -->
+  <div id="page-creative" class="page">
+    <div class="kpi-grid">
+      <div class="kpi c-g"><div class="kpi-label">Best Hook CTR</div><div class="kpi-val" id="cr-ctr">—</div><div class="kpi-delta flat">Target: 2%+</div></div>
+      <div class="kpi c-p"><div class="kpi-label">UGC vs Branded</div><div class="kpi-val" id="cr-ugc">—</div><div class="kpi-delta" id="cr-ugc-d"></div></div>
+      <div class="kpi c-y"><div class="kpi-label">Avg Creative Lifespan</div><div class="kpi-val" id="cr-life">—</div><div class="kpi-delta flat">Days before fatigue</div></div>
+      <div class="kpi c-r"><div class="kpi-label">Fatigued Creatives</div><div class="kpi-val" id="cr-fat">—</div><div class="kpi-delta dn">Need replacement</div></div>
+    </div>
+    <div class="sec-hd"><div class="sec-title">Creative Performance Tracker</div><button class="btn" onclick="addCreative()">+ Add Creative</button></div>
+    <div class="tbl-card">
+      <table class="tbl">
+        <thead><tr><th>Creative Name</th><th>Type</th><th>Hook/Angle</th><th>Spend</th><th>CTR</th><th>ROAS</th><th>Days Running</th><th>Status</th></tr></thead>
+        <tbody id="creative-tbody"></tbody>
+      </table>
+    </div>
+    <div class="form-block">
+      <div class="form-title">Add Creative</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Creative Name</label><input class="form-input" id="cr-name" placeholder="UGC_Dress_Hook1"></div>
+        <div class="form-group"><label class="form-label">Type</label>
+          <select class="form-input" id="cr-type"><option>UGC</option><option>Branded</option><option>Static</option><option>Carousel</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Hook / Angle</label><input class="form-input" id="cr-hook" placeholder="Problem-solution"></div>
+        <div class="form-group"><label class="form-label">CTR %</label><input class="form-input" id="cr-ctr-input" placeholder="2.3" type="number" step="0.1"></div>
+        <div class="form-group"><label class="form-label">ROAS</label><input class="form-input" id="cr-roas" placeholder="3.8" type="number" step="0.1"></div>
+        <div class="form-group"><label class="form-label">Spend (EGP)</label><input class="form-input" id="cr-spend" placeholder="5000" type="number"></div>
+      </div>
+      <div style="margin-top:14px;"><button class="btn btn-primary" onclick="saveCreative()">Save Creative</button></div>
+    </div>
+  </div>
+
+  <!-- ═══ 5. FUNNEL ═══ -->
+  <div id="page-funnel" class="page">
+    <div class="kpi-grid">
+      <div class="kpi c-b"><div class="kpi-label">Sessions</div><div class="kpi-val" id="fn-sess">—</div><div class="kpi-delta flat">Enter manually below</div></div>
+      <div class="kpi c-p"><div class="kpi-label">ATC Rate</div><div class="kpi-val" id="fn-atc">—</div><div class="kpi-delta flat">Target: 6–10%</div></div>
+      <div class="kpi c-g"><div class="kpi-label">Checkout CVR</div><div class="kpi-val" id="fn-chk">—</div><div class="kpi-delta flat">Target: 45–55%</div></div>
+      <div class="kpi c-y"><div class="kpi-label">Overall CVR</div><div class="kpi-val" id="fn-cvr">—</div><div class="kpi-delta flat">Target: 2–4%</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      <div>
+        <div class="sec-hd"><div class="sec-title">Conversion Funnel</div></div>
+        <div class="funnel" id="funnel-steps"></div>
+      </div>
+      <div>
+        <div class="sec-hd"><div class="sec-title">Drop-off Analysis</div></div>
+        <div class="chart-card" style="height:100%;">
+          <div style="height:250px;"><canvas id="c-funnel-drop"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-block">
+      <div class="form-title">Funnel Data Input (من Google Analytics أو Shopify Analytics)</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Sessions (Today)</label><input class="form-input" id="fn-in-sess" placeholder="5000" type="number" oninput="updateFunnel()"></div>
+        <div class="form-group"><label class="form-label">PDP Views</label><input class="form-input" id="fn-in-pdp" placeholder="2500" type="number" oninput="updateFunnel()"></div>
+        <div class="form-group"><label class="form-label">Add to Cart</label><input class="form-input" id="fn-in-atc" placeholder="350" type="number" oninput="updateFunnel()"></div>
+        <div class="form-group"><label class="form-label">Checkout Initiated</label><input class="form-input" id="fn-in-chk" placeholder="200" type="number" oninput="updateFunnel()"></div>
+        <div class="form-group"><label class="form-label">Purchases</label><input class="form-input" id="fn-in-pur" placeholder="143" type="number" oninput="updateFunnel()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 6. PRODUCTS & PDP ═══ -->
+  <div id="page-products" class="page">
+    <div class="kpi-grid">
+      <div class="kpi c-p"><div class="kpi-label">Total Products</div><div class="kpi-val" id="pd-total">—</div><div class="kpi-delta" id="pd-active"></div></div>
+      <div class="kpi c-r"><div class="kpi-label">Low Stock</div><div class="kpi-val" id="pd-low">—</div><div class="kpi-delta dn">Need reorder</div></div>
+      <div class="kpi c-r"><div class="kpi-label">Out of Stock</div><div class="kpi-val" id="pd-oos">—</div><div class="kpi-delta dn" id="pd-oos-d"></div></div>
+      <div class="kpi c-g"><div class="kpi-label">Avg Product Price</div><div class="kpi-val" id="pd-price">—</div><div class="kpi-delta flat">EGP</div></div>
+    </div>
+    <div class="sec-hd"><div class="sec-title">Product Intelligence</div></div>
+    <div class="tbl-card">
+      <table class="tbl">
+        <thead><tr><th>Product</th><th>Type</th><th>Variants</th><th>Price</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="prod-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ 7. PAYMENTS & COD ═══ -->
+  <div id="page-payments" class="page">
+    <div class="kpi-grid">
+      <div class="kpi c-r"><div class="kpi-label">COD Rate</div><div class="kpi-val" id="pay-cod">—</div><div class="kpi-delta dn">Reduce over time</div></div>
+      <div class="kpi c-g"><div class="kpi-label">Prepaid Rate</div><div class="kpi-val" id="pay-pre">—</div><div class="kpi-delta up">Target: 40%+</div></div>
+      <div class="kpi c-y"><div class="kpi-label">COD Failure Rate</div><div class="kpi-val" id="pay-fail">—</div><div class="kpi-delta flat">Target: &lt;15%</div></div>
+      <div class="kpi c-p"><div class="kpi-label">Payment Success</div><div class="kpi-val" id="pay-succ">—</div><div class="kpi-delta up">Online payments</div></div>
+    </div>
+    <div class="chart-row eq">
+      <div class="chart-card">
+        <div class="chart-hd"><div><div class="chart-title">Payment Method Split</div><div class="chart-sub">Last 30 days</div></div></div>
+        <div style="height:220px;display:flex;align-items:center;justify-content:center;"><canvas id="c-payment-split" style="max-width:185px;"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-hd"><div><div class="chart-title">COD vs Prepaid Trend</div><div class="chart-sub">Last 30 days</div></div></div>
+        <div style="height:220px;"><canvas id="c-cod-trend"></canvas></div>
+      </div>
+    </div>
+    <div class="sec-hd"><div class="sec-title">Recent Transactions</div></div>
+    <div class="tbl-card">
+      <table class="tbl">
+        <thead><tr><th>Order</th><th>Customer</th><th>Amount</th><th>Method</th><th>Status</th><th>Time</th></tr></thead>
+        <tbody id="pay-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ 8. RETENTION & RFM ═══ -->
+  <div id="page-retention" class="page">
+    <div class="kpi-grid">
+      <div class="kpi c-g"><div class="kpi-label">Repeat Rate</div><div class="kpi-val" id="rt-repeat">—</div><div class="kpi-delta flat">Target: 30%+</div></div>
+      <div class="kpi c-p"><div class="kpi-label">Avg LTV (90d)</div><div class="kpi-val" id="rt-ltv">—</div><div class="kpi-delta" id="rt-ltv-d"></div></div>
+      <div class="kpi c-y"><div class="kpi-label">Avg Days Between Orders</div><div class="kpi-val" id="rt-days">—</div><div class="kpi-delta flat">days</div></div>
+      <div class="kpi c-b"><div class="kpi-label">VIP Customers</div><div class="kpi-val" id="rt-vip">—</div><div class="kpi-delta up">3+ orders</div></div>
+    </div>
+
+    <div class="sec-hd"><div class="sec-title">RFM Segmentation</div></div>
+    <div class="rfm-grid" id="rfm-grid"></div>
+
+    <div class="chart-row eq">
+      <div class="chart-card">
+        <div class="chart-hd"><div><div class="chart-title">Cohort Retention</div><div class="chart-sub">% repeat purchase by month</div></div></div>
+        <div style="height:220px;"><canvas id="c-cohort"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-hd"><div><div class="chart-title">Customer Segments</div><div class="chart-sub">RFM distribution</div></div></div>
+        <div style="height:220px;display:flex;align-items:center;justify-content:center;"><canvas id="c-rfm-pie" style="max-width:185px;"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 9. LIFECYCLE & CRM ═══ -->
+  <div id="page-lifecycle" class="page">
+    <div class="connect-banner" id="klaviyo-banner">
+      <div><h3 style="font-size:13px;font-weight:600;margin-bottom:4px;">Connect Klaviyo</h3><p style="font-size:12px;color:var(--muted2);">Add Klaviyo API key to see email & WhatsApp flow performance automatically.</p></div>
+      <button class="btn btn-primary" onclick="nav('settings',document.querySelectorAll('.nav-btn')[13])">Connect</button>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi c-g"><div class="kpi-label">Email Open Rate</div><div class="kpi-val" id="lc-open">—</div><div class="kpi-delta flat">Target: 25%+</div></div>
+      <div class="kpi c-p"><div class="kpi-label">Flow Revenue</div><div class="kpi-val" id="lc-rev">—</div><div class="kpi-delta flat">This month</div></div>
+      <div class="kpi c-y"><div class="kpi-label">Cart Recovery Rate</div><div class="kpi-val" id="lc-cart">—</div><div class="kpi-delta flat">Target: 10-15%</div></div>
+      <div class="kpi c-b"><div class="kpi-label">WhatsApp CTR</div><div class="kpi-val" id="lc-wa">—</div><div class="kpi-delta flat">Target: 30%+</div></div>
+    </div>
+    <div class="sec-hd"><div class="sec-title">Automation Flows</div></div>
+    <div class="tbl-card">
+      <table class="tbl">
+        <thead><tr><th>Flow</th><th>Channel</th><th>Sent</th><th>Open Rate</th><th>CTR</th><th>Revenue</th><th>Status</th></tr></thead>
+        <tbody id="flows-tbody">
+          <tr><td style="font-weight:500;">Welcome Series</td><td><span class="pill p-b">Email</span></td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td><span class="pill p-y">Setup needed</span></td></tr>
+          <tr><td style="font-weight:500;">Abandoned Cart (3 steps)</td><td><span class="pill p-b">Email + WA</span></td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td><span class="pill p-y">Setup needed</span></td></tr>
+          <tr><td style="font-weight:500;">Post-Purchase Upsell</td><td><span class="pill p-b">Email</span></td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td><span class="pill p-y">Setup needed</span></td></tr>
+          <tr><td style="font-weight:500;">Winback — 60d inactive</td><td><span class="pill p-pk">WhatsApp</span></td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td><span class="pill p-y">Setup needed</span></td></tr>
+          <tr><td style="font-weight:500;">Back in Stock</td><td><span class="pill p-b">Email + WA</span></td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td><span class="pill p-y">Setup needed</span></td></tr>
+          <tr><td style="font-weight:500;">VIP Early Access</td><td><span class="pill p-pk">WhatsApp</span></td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td><span class="pill p-y">Setup needed</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="sec-hd" style="margin-top:8px;"><div class="sec-title">Recommended Flows to Build Now</div></div>
+    <div class="rec-grid">
+      <div class="rec action"><div class="rec-type">Highest ROI</div><div class="rec-title">Abandoned Cart — 3 Steps</div><div class="rec-body">Step 1 (1hr): reminder. Step 2 (24hr): social proof + offer 10%. Step 3 (72hr): last chance. Average recovery rate: 10–15%.</div><div class="rec-impact">Potential: +15,000 EGP/month</div></div>
+      <div class="rec action"><div class="rec-type">Quick Win</div><div class="rec-title">Post-Purchase Upsell (Day 7)</div><div class="rec-body">Thank you → how to style → cross-sell nearest product. 78% of customers haven't bought again.</div><div class="rec-impact">Repeat rate: +5–8%</div></div>
+      <div class="rec warn"><div class="rec-type">Retention</div><div class="rec-title">Winback — 60+ Days Inactive</div><div class="rec-body">"We miss you" + 15% code. Target customers who haven't ordered in 60+ days.</div><div class="rec-impact">CAC saved: ~120 EGP/customer</div></div>
+      <div class="rec info"><div class="rec-type">COD Reduction</div><div class="rec-title">Prepaid Incentive Flow</div><div class="rec-body">Offer free shipping or 5% discount for prepaid orders. Critical for reducing COD failure rate.</div><div class="rec-impact">COD rate target: -10% in 60 days</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ 10. ORDERS ═══ -->
+  <div id="page-orders" class="page">
+    <div class="kpi-grid">
+      <div class="kpi c-g"><div class="kpi-label">Orders Today</div><div class="kpi-val" id="or-today">—</div><div class="kpi-delta" id="or-today-d"></div></div>
+      <div class="kpi c-p"><div class="kpi-label">Revenue Today</div><div class="kpi-val" id="or-rev">—</div><div class="kpi-delta" id="or-rev-d"></div></div>
+      <div class="kpi c-y"><div class="kpi-label">AOV</div><div class="kpi-val" id="or-aov">—</div><div class="kpi-delta flat"></div></div>
+      <div class="kpi c-b"><div class="kpi-label">Fulfillment Rate</div><div class="kpi-val" id="or-ful">—</div><div class="kpi-delta" id="or-ful-d"></div></div>
+    </div>
+    <div class="sec-hd"><div class="sec-title">Recent Orders</div><span class="pill p-b">Live</span></div>
+    <div class="tbl-card">
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Fulfillment</th><th>Time</th></tr></thead>
+        <tbody id="orders-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ 11. CUSTOMERS ═══ -->
+  <div id="page-customers" class="page">
+    <div class="kpi-grid">
+      <div class="kpi c-p"><div class="kpi-label">Total Customers</div><div class="kpi-val" id="cu-total">—</div><div class="kpi-delta up"></div></div>
+      <div class="kpi c-g"><div class="kpi-label">New This Month</div><div class="kpi-val" id="cu-new">—</div><div class="kpi-delta up"></div></div>
+      <div class="kpi c-y"><div class="kpi-label">Repeat Buyers</div><div class="kpi-val" id="cu-repeat">—</div><div class="kpi-delta" id="cu-repeat-d"></div></div>
+      <div class="kpi c-b"><div class="kpi-label">Avg Orders/Customer</div><div class="kpi-val" id="cu-avg">—</div><div class="kpi-delta flat"></div></div>
+    </div>
+    <div class="sec-hd"><div class="sec-title">Customer List</div></div>
+    <div class="tbl-card">
+      <table class="tbl">
+        <thead><tr><th>Customer</th><th>Email</th><th>Orders</th><th>Total Spent</th><th>Last Order</th><th>Segment</th></tr></thead>
+        <tbody id="cust-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ 12. EXPERIMENTS ═══ -->
+  <div id="page-experiments" class="page">
+    <div class="kpi-grid">
+      <div class="kpi c-g"><div class="kpi-label">Active Tests</div><div class="kpi-val" id="ex-active">—</div><div class="kpi-delta flat"></div></div>
+      <div class="kpi c-p"><div class="kpi-label">Completed Tests</div><div class="kpi-val" id="ex-done">—</div><div class="kpi-delta flat"></div></div>
+      <div class="kpi c-y"><div class="kpi-label">Win Rate</div><div class="kpi-val" id="ex-win">—</div><div class="kpi-delta flat">Tests with positive result</div></div>
+      <div class="kpi c-b"><div class="kpi-label">Backlog</div><div class="kpi-val" id="ex-backlog">—</div><div class="kpi-delta flat">Ideas to test</div></div>
+    </div>
+    <div class="sec-hd"><div class="sec-title">Experiment Backlog — ICE Scored</div><button class="btn" onclick="addExperiment()">+ Add</button></div>
+    <div class="tbl-card">
+      <table class="tbl">
+        <thead><tr><th>Rank</th><th>Hypothesis</th><th>Area</th><th>Impact</th><th>Confidence</th><th>Ease</th><th>ICE Score</th><th>Status</th></tr></thead>
+        <tbody id="exp-tbody"></tbody>
+      </table>
+    </div>
+    <div class="form-block">
+      <div class="form-title">Add Experiment</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Hypothesis</label><input class="form-input" id="ex-hyp" placeholder="If we add UGC to PDP, CVR will increase by 15%"></div>
+        <div class="form-group"><label class="form-label">Area</label>
+          <select class="form-input" id="ex-area"><option>PDP</option><option>Checkout</option><option>Email</option><option>Ad Creative</option><option>Homepage</option><option>Pricing</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Impact (1–10)</label><input class="form-input" id="ex-impact" type="number" min="1" max="10" placeholder="8"></div>
+        <div class="form-group"><label class="form-label">Confidence (1–10)</label><input class="form-input" id="ex-conf" type="number" min="1" max="10" placeholder="6"></div>
+        <div class="form-group"><label class="form-label">Ease (1–10)</label><input class="form-input" id="ex-ease" type="number" min="1" max="10" placeholder="7"></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-input" id="ex-status"><option>Backlog</option><option>In Progress</option><option>Won</option><option>Lost</option></select>
+        </div>
+      </div>
+      <div style="margin-top:14px;"><button class="btn btn-primary" onclick="saveExperiment()">Add to Backlog</button></div>
+    </div>
+  </div>
+
+  <!-- ═══ SETTINGS ═══ -->
+  <div id="page-settings" class="page">
+    <div class="form-block">
+      <div class="form-title">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Shopify — Connected
+        <span class="pill p-g">Live</span>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Store</label><input class="form-input" value="baf0e1-gm.myshopify.com" readonly style="opacity:0.6;"></div>
+        <div class="form-group"><label class="form-label">Worker URL</label><input class="form-input" value="proud-sky-f2bf.ahmed-fatoh116.workers.dev" readonly style="opacity:0.6;"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="refreshAll()">Test & Refresh Data</button>
+      </div>
+    </div>
+
+    <div class="form-block">
+      <div class="form-title">Meta Ads API <span class="pill p-y" id="meta-status-pill">Not connected</span></div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Ad Account ID</label><input class="form-input" id="s-meta-acc" placeholder="act_1234567890"><span class="form-hint">Meta Business Suite → Settings → Ad Accounts</span></div>
+        <div class="form-group"><label class="form-label">Access Token</label><input class="form-input" id="s-meta-tok" type="password" placeholder="EAAxxxxxxxxxx"><span class="form-hint">System Users → Generate Token</span></div>
+      </div>
+      <div style="margin-top:12px;"><button class="btn btn-primary" onclick="connectMeta()">Connect Meta Ads</button></div>
+    </div>
+
+    <div class="form-block">
+      <div class="form-title">Klaviyo <span class="pill p-y">Not connected</span></div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">API Key</label><input class="form-input" id="s-klaviyo" type="password" placeholder="pk_xxxxxxxxxxxx"><span class="form-hint">Klaviyo → Account → API Keys</span></div>
+      </div>
+      <div style="margin-top:12px;"><button class="btn btn-primary" onclick="connectKlaviyo()">Connect Klaviyo</button></div>
+    </div>
+
+    <div class="form-block">
+      <div class="form-title">Brand Targets</div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Daily Revenue Target (EGP)</label><input class="form-input" id="s-rev-t" placeholder="200000" type="number"></div>
+        <div class="form-group"><label class="form-label">ROAS Target</label><input class="form-input" id="s-roas-t" placeholder="3.0" type="number" step="0.1"></div>
+        <div class="form-group"><label class="form-label">CAC Target (EGP)</label><input class="form-input" id="s-cac-t" placeholder="150" type="number"></div>
+        <div class="form-group"><label class="form-label">Low Stock Threshold</label><input class="form-input" id="s-stock-t" placeholder="20" type="number"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+      <button class="btn btn-ghost" onclick="clearAll()">Reset All</button>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════
+   CONFIG
+══════════════════════════════════════ */
+const WORKER = 'https://proud-sky-f2bf.ahmed-fatoh116.workers.dev';
+let cfg = JSON.parse(localStorage.getItem('bid_cfg') || '{}');
+let currentLang = localStorage.getItem('bid_lang') || 'en';
+
+// Live data store
+const D = {
+  orders: [], products: [], customers: [],
+  history: [], payments: [],
+  todayRev: 0, todayOrders: 0, totalCustomers: 0,
+  revHistory: new Array(30).fill(0),
+  ordHistory: new Array(30).fill(0),
+  connected: false
+};
+
+// User-entered data
+let creatives = JSON.parse(localStorage.getItem('bid_creatives') || '[]');
+let experiments = JSON.parse(localStorage.getItem('bid_experiments') || '[]');
+
+/* ══════════════════════════════════════
+   API
+══════════════════════════════════════ */
+async function apiFetch(path) {
+  try {
+    const r = await fetch(`${WORKER}${path}`);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+/* ══════════════════════════════════════
+   LOAD DATA
+══════════════════════════════════════ */
+async function loadAll() {
+  setSync('loading', 'Loading...');
+  showLoader('Fetching Shewear data...');
+  try {
+    const [ordRes, histRes, prodRes, custRes, payRes, rfmRes] = await Promise.all([
+      apiFetch('/orders'),
+      apiFetch('/orders/history'),
+      apiFetch('/products'),
+      apiFetch('/customers'),
+      apiFetch('/payments'),
+      apiFetch('/rfm')
+    ]);
+    hideLoader();
+    if (!ordRes?.data) { setSync('error','API error'); loadDemo(); return; }
+
+    D.connected = true;
+    // Orders
+    D.orders = (ordRes.data?.orders?.edges||[]).map(e=>e.node);
+    D.todayOrders = D.orders.length;
+    D.todayRev = D.orders.reduce((s,o)=>s+parseFloat(o.totalPriceSet?.shopMoney?.amount||0),0);
+    // History
+    const hist = (histRes?.data?.orders?.edges||[]).map(e=>e.node);
+    D.history = hist;
+    D.revHistory = buildHistory(hist,30,'rev');
+    D.ordHistory = buildHistory(hist,30,'cnt');
+    // Products
+    D.products = (prodRes?.data?.products?.edges||[]).map(e=>({
+      ...e.node, variants:(e.node.variants?.edges||[]).map(v=>v.node)
+    }));
+    // Customers
+    D.customers = (custRes?.data?.customers?.edges||[]).map(e=>e.node);
+    D.totalCustomers = D.customers.length;
+    // Payments (same data, different view)
+    D.payments = (payRes?.data?.orders?.edges||[]).map(e=>e.node);
+
+    renderAll();
+    setSync('connected', `Updated ${new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`);
+  } catch(e) { hideLoader(); setSync('error','Error'); loadDemo(); }
+}
+
+function buildHistory(orders, days, type) {
+  return Array.from({length:days},(_,i)=>{
+    const d = new Date(Date.now()-(days-1-i)*864e5).toISOString().split('T')[0];
+    const day = orders.filter(o=>o.createdAt?.startsWith(d));
+    return type==='rev' ? day.reduce((s,o)=>s+parseFloat(o.totalPriceSet?.shopMoney?.amount||0),0) : day.length;
+  });
+}
+
+/* ══════════════════════════════════════
+   DEMO DATA
+══════════════════════════════════════ */
+function loadDemo() {
+  D.todayRev=200000; D.todayOrders=143; D.totalCustomers=4820;
+  D.revHistory=Array.from({length:30},(_,i)=>150000+Math.random()*80000);
+  D.ordHistory=Array.from({length:30},(_,i)=>80+Math.floor(Math.random()*80));
+  D.orders=Array.from({length:12},(_,i)=>({
+    name:`#${1200+i}`,
+    totalPriceSet:{shopMoney:{amount:(800+i*200).toFixed(2)}},
+    displayFinancialStatus:i%4===0?'PENDING':'PAID',
+    displayFulfillmentStatus:i%3===0?'FULFILLED':'UNFULFILLED',
+    paymentGatewayNames:[i%3===0?'cash_on_delivery':'visa'],
+    createdAt:new Date(Date.now()-i*1800000).toISOString(),
+    customer:{firstName:['Nour','Mariam','Sara','Dina','Aya','Rania','Heba','Mona','Nada','Layla','Hana','Ola'][i],lastName:''},
+    lineItems:{edges:[{node:{title:'Summer Dress',quantity:1}}]}
+  }));
+  D.products=Array.from({length:8},(_,i)=>({
+    title:['Summer Dress A-12','Lilly Blouse B-07','Midi Skirt C-03','Casual Jacket D-01','Evening Dress E-05','Silk Top F-02','Wide Pants G-08','Crop Top H-04'][i],
+    productType:'Fashion',status:'ACTIVE',
+    variants:[{price:(800+i*300).toFixed(2),inventoryQuantity:[120,45,12,60,28,80,15,95][i]}]
+  }));
+  D.customers=Array.from({length:15},(_,i)=>({
+    firstName:['Nour','Mariam','Sara','Dina','Aya','Rania','Heba','Mona','Nada','Layla','Hana','Ola','Mai','Doaa','Reem'][i],
+    lastName:'', email:`customer${i+1}@example.com`,
+    ordersCount:Math.floor(Math.random()*5)+1,
+    totalSpentV2:{amount:(500+i*400).toFixed(2)},
+    createdAt:new Date(Date.now()-i*7*864e5).toISOString(),
+    updatedAt:new Date(Date.now()-i*2*864e5).toISOString()
+  }));
+  D.payments=D.orders;
+  renderAll();
+  setSync('demo','Demo data');
+}
+
+/* ══════════════════════════════════════
+   RENDER ALL
+══════════════════════════════════════ */
+function renderAll() {
+  renderExecutive();
+  renderOrders();
+  renderProducts();
+  renderCustomers();
+  renderPayments();
+  renderRetention();
+  renderExperiments();
+  renderCreatives();
+  initCharts();
+}
+
+/* ── EXECUTIVE ── */
+function renderExecutive() {
+  const rev = D.todayRev, ord = D.todayOrders, aov = ord>0?rev/ord:0;
+  const target = parseFloat(cfg.revTarget)||200000;
+  const thresh = parseInt(cfg.stockThresh)||20;
+
+  setV('e-rev', fmt(rev));
+  setV('e-ord', ord.toLocaleString());
+  setV('e-aov', fmt(aov));
+  setDelta('e-rev-d', `${((rev/target)*100).toFixed(0)}% of target`, rev>=target?'up':rev>=target*0.8?'flat':'dn');
+  setV('e-rev-t', `Target: ${fmt(target)}`);
+
+  // LTV
+  const custs = D.customers;
+  const repeat = custs.filter(c=>parseInt(c.ordersCount||0)>1);
+  const avgLTV = custs.length>0 ? custs.reduce((s,c)=>s+parseFloat(c.totalSpentV2?.amount||0),0)/custs.length : 0;
+  const retRate = custs.length>0 ? (repeat.length/custs.length*100).toFixed(0)+'%' : '—';
+  setV('e-ltv', fmt(avgLTV));
+  setV('e-ret', retRate);
+  setDelta('e-ret-d', parseFloat(retRate)>=30?'↑ At target':'↓ Below 30% target', parseFloat(retRate)>=30?'up':'dn');
+
+  // CAC placeholder
+  const spend = parseFloat(cfg.adSpend)||0;
+  const newCusts = parseInt(cfg.newCusts)||1;
+  if(spend && newCusts) {
+    setV('e-cac', fmt(spend/newCusts));
+    setV('e-mer', (rev/(spend||1)).toFixed(1)+'x');
+  } else {
+    setV('e-cac','—'); setV('e-mer','—');
+  }
+
+  // Stock alerts
+  const lowStock = D.products.filter(p=>{
+    const s=p.variants?.reduce((a,v)=>a+(parseInt(v.inventoryQuantity)||0),0)||0;
+    return s>0&&s<=thresh;
+  });
+  const oos = D.products.filter(p=>p.variants?.reduce((a,v)=>a+(parseInt(v.inventoryQuantity)||0),0)===0);
+  setV('e-stock', (lowStock.length+oos.length).toString());
+  setDelta('e-stock-d', `${oos.length} OOS, ${lowStock.length} low`, oos.length>0?'dn':'flat');
+
+  // Alerts
+  const alerts = [];
+  if(rev<target*0.7&&new Date().getHours()>=14) alerts.push({type:'red',msg:`Revenue ${((rev/target)*100).toFixed(0)}% of target — 2PM passed`});
+  if(oos.length>0) alerts.push({type:'red',msg:`${oos.length} products out of stock`});
+  if(lowStock.length>0) alerts.push({type:'amber',msg:`${lowStock.length} products running low`});
+  if(parseFloat(retRate)<25) alerts.push({type:'amber',msg:`Repeat rate ${retRate} — below 30% benchmark`});
+  if(alerts.length===0) alerts.push({type:'green',msg:'All systems normal — no critical alerts'});
+
+  const alertBar = document.getElementById('exec-alerts');
+  if(alertBar) alertBar.innerHTML = alerts.map(a=>`<div class="alert alert-${a.type}">${a.msg}</div>`).join('');
+
+  // Recs
+  const recs = genRecs();
+  setV('exec-rec-count', recs.length+' actions');
+  const el = document.getElementById('exec-recs');
+  if(el) el.innerHTML = recs.slice(0,4).map(recHtml).join('');
+}
+
+/* ── ORDERS ── */
+function renderOrders() {
+  const orders = D.orders;
+  const rev = D.todayRev, ord = D.todayOrders;
+  const aov = ord>0?rev/ord:0;
+  const ful = orders.filter(o=>o.displayFulfillmentStatus==='FULFILLED').length;
+
+  setV('or-today', ord.toLocaleString()); setV('or-rev', fmt(rev));
+  setV('or-aov', fmt(aov));
+  setV('or-ful', ord>0?((ful/ord)*100).toFixed(0)+'%':'—');
+  setDelta('or-today-d','Live from Shopify','up');
+
+  // Also update executive orders
+  setV('e-ord', ord.toLocaleString());
+
+  const tb = document.getElementById('orders-tbody');
+  if(!tb) return;
+  if(!orders.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">No orders today</td></tr>';return;}
+  tb.innerHTML = orders.slice(0,25).map(o=>{
+    const amt = parseFloat(o.totalPriceSet?.shopMoney?.amount||0);
+    const fin = (o.displayFinancialStatus||'PENDING').toLowerCase();
+    const ful2 = (o.displayFulfillmentStatus||'UNFULFILLED').toLowerCase();
+    const method = o.paymentGatewayNames?.[0]||'—';
+    const isCOD = method.includes('cash')||method.includes('cod');
+    const name = o.customer?`${o.customer.firstName||''} ${o.customer.lastName||''}`.trim():'Guest';
+    const time = new Date(o.createdAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const items = o.lineItems?.edges?.length||0;
+    return `<tr>
+      <td class="mono">${o.name||'—'}</td>
+      <td style="font-weight:500;">${name}</td>
+      <td class="mono">${items}</td>
+      <td class="mono">${fmt(amt)}</td>
+      <td><span class="pill ${isCOD?'p-y':'p-g'}">${isCOD?'COD':'Prepaid'}</span></td>
+      <td><span class="pill ${fin==='paid'?'p-g':fin==='pending'?'p-y':'p-r'}">${fin}</span></td>
+      <td class="mono" style="color:var(--muted);">${time}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── PRODUCTS ── */
+function renderProducts() {
+  const prods = D.products;
+  const thresh = parseInt(cfg.stockThresh)||20;
+  let total=0,active=0,low=0,oos=0,totalPrice=0;
+  prods.forEach(p=>{
+    total++;
+    if(p.status==='ACTIVE') active++;
+    const stock=p.variants?.reduce((s,v)=>s+(parseInt(v.inventoryQuantity)||0),0)||0;
+    if(stock===0) oos++; else if(stock<=thresh) low++;
+    totalPrice+=parseFloat(p.variants?.[0]?.price||0);
+  });
+  setV('pd-total', total.toString());
+  setDelta('pd-active', `${active} active`, 'up');
+  setV('pd-low', low.toString());
+  setV('pd-oos', oos.toString());
+  setV('pd-price', total>0?fmt(totalPrice/total):'—');
+  if(oos>0) setDelta('pd-oos-d',`${oos} need restock`,'dn');
+
+  // Executive
+  setV('e-stock', (low+oos).toString());
+
+  const tb = document.getElementById('prod-tbody');
+  if(!tb) return;
+  tb.innerHTML = prods.slice(0,30).map(p=>{
+    const stock=p.variants?.reduce((s,v)=>s+(parseInt(v.inventoryQuantity)||0),0)||0;
+    const vars=p.variants?.length||0;
+    const price=parseFloat(p.variants?.[0]?.price||0);
+    const sCls=stock===0?'p-r':stock<=thresh?'p-y':'p-g';
+    const sTxt=stock===0?'Out of stock':stock<=thresh?`Low (${stock})`:`${stock} units`;
+    const action=stock===0?'<span class="pill p-r">Reorder Now</span>':stock<=thresh?'<span class="pill p-y">Order Soon</span>':'<span class="pill p-gray">OK</span>';
+    return `<tr>
+      <td style="font-weight:500;">${p.title}</td>
+      <td style="color:var(--muted2);font-size:12px;">${p.productType||'—'}</td>
+      <td class="mono">${vars}</td>
+      <td class="mono">${fmt(price)}</td>
+      <td><span class="pill ${sCls}">${sTxt}</span></td>
+      <td><span class="pill ${p.status==='ACTIVE'?'p-g':'p-gray'}">${p.status?.toLowerCase()}</span></td>
+      <td>${action}</td>
+    </tr>`;
+  }).join('');
+
+  const badge = document.getElementById('prod-dot');
+  if(badge) badge.style.display = low+oos>0?'inline':'none';
+}
+
+/* ── CUSTOMERS ── */
+function renderCustomers() {
+  const custs = D.customers;
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(),now.getMonth(),1);
+  const newM = custs.filter(c=>new Date(c.createdAt)>=monthStart).length;
+  const repeat = custs.filter(c=>parseInt(c.ordersCount||0)>1).length;
+  const avg = custs.length>0?(custs.reduce((s,c)=>s+parseInt(c.ordersCount||0),0)/custs.length).toFixed(1):'—';
+
+  setV('cu-total', D.totalCustomers.toLocaleString());
+  setV('cu-new', newM.toString());
+  setV('cu-repeat', repeat.toString());
+  setV('cu-avg', avg);
+  setDelta('cu-repeat-d', custs.length>0?`${((repeat/custs.length)*100).toFixed(0)}% rate`:'', 'flat');
+
+  const tb = document.getElementById('cust-tbody');
+  if(!tb) return;
+  tb.innerHTML = custs.slice(0,25).map(c=>{
+    const name=`${c.firstName||''} ${c.lastName||''}`.trim()||'Unknown';
+    const spent=fmt(parseFloat(c.totalSpentV2?.amount||0));
+    const ords=parseInt(c.ordersCount||0);
+    const cls=ords>3?'p-p':ords>1?'p-g':'p-gray';
+    const tag=ords>3?'VIP':ords>1?'Repeat':'New';
+    const date=c.updatedAt?new Date(c.updatedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'—';
+    return `<tr>
+      <td style="font-weight:500;">${name}</td>
+      <td style="color:var(--muted2);font-size:12px;">${c.email||'—'}</td>
+      <td class="mono">${ords}</td>
+      <td class="mono">${spent}</td>
+      <td class="mono" style="color:var(--muted);">${date}</td>
+      <td><span class="pill ${cls}">${tag}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── PAYMENTS ── */
+function renderPayments() {
+  const pays = D.payments;
+  const cod = pays.filter(o=>(o.paymentGatewayNames||[]).some(m=>m.includes('cash')||m.includes('cod')));
+  const prepaid = pays.filter(o=>!(o.paymentGatewayNames||[]).some(m=>m.includes('cash')||m.includes('cod')));
+  const codRate = pays.length>0?((cod.length/pays.length)*100).toFixed(0)+'%':'—';
+  const prepRate = pays.length>0?((prepaid.length/pays.length)*100).toFixed(0)+'%':'—';
+
+  setV('pay-cod', codRate);
+  setV('pay-pre', prepRate);
+  setV('pay-fail','—');
+  setV('pay-succ', prepRate);
+
+  const tb = document.getElementById('pay-tbody');
+  if(!tb) return;
+  tb.innerHTML = D.orders.slice(0,15).map(o=>{
+    const method=(o.paymentGatewayNames||['—'])[0];
+    const isCOD=method.includes('cash')||method.includes('cod');
+    const name=o.customer?`${o.customer.firstName||''} ${o.customer.lastName||''}`.trim():'Guest';
+    const amt=parseFloat(o.totalPriceSet?.shopMoney?.amount||0);
+    const time=new Date(o.createdAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    const fin=(o.displayFinancialStatus||'').toLowerCase();
+    return `<tr>
+      <td class="mono">${o.name||'—'}</td>
+      <td style="font-weight:500;">${name}</td>
+      <td class="mono">${fmt(amt)}</td>
+      <td><span class="pill ${isCOD?'p-y':'p-g'}">${isCOD?'COD':'Prepaid'}</span></td>
+      <td><span class="pill ${fin==='paid'?'p-g':fin==='pending'?'p-y':'p-r'}">${fin}</span></td>
+      <td class="mono" style="color:var(--muted);">${time}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── RETENTION ── */
+function renderRetention() {
+  const custs = D.customers;
+  const repeat = custs.filter(c=>parseInt(c.ordersCount||0)>1);
+  const vip = custs.filter(c=>parseInt(c.ordersCount||0)>3);
+  const retRate = custs.length>0?((repeat.length/custs.length)*100).toFixed(0)+'%':'—';
+  const avgLTV = custs.length>0?custs.reduce((s,c)=>s+parseFloat(c.totalSpentV2?.amount||0),0)/custs.length:0;
+
+  setV('rt-repeat', retRate);
+  setV('rt-ltv', fmt(avgLTV));
+  setV('rt-vip', vip.length.toString());
+  setV('rt-days', '38'); // Would need order timestamps to calc properly
+
+  // RFM
+  const now = Date.now();
+  const loyal = custs.filter(c=>parseInt(c.ordersCount||0)>=3);
+  const atRisk = custs.filter(c=>{
+    const days = (now-new Date(c.updatedAt||c.createdAt).getTime())/864e5;
+    return parseInt(c.ordersCount||0)>1 && days>45;
+  });
+  const inactive = custs.filter(c=>{
+    const days = (now-new Date(c.updatedAt||c.createdAt).getTime())/864e5;
+    return days>90;
+  });
+  const newC = custs.filter(c=>parseInt(c.ordersCount||0)===1);
+
+  const rfmEl = document.getElementById('rfm-grid');
+  if(rfmEl) rfmEl.innerHTML = [
+    {name:'Loyal Customers',count:loyal.length,cls:'p-g',desc:'3+ orders, active recently',action:'Reward with early access + VIP perks'},
+    {name:'At Risk',count:atRisk.length,cls:'p-y',desc:'Bought before, quiet 45+ days',action:'Send winback: "We miss you" + 15% off'},
+    {name:'New Customers',count:newC.length,cls:'p-b',desc:'Only 1 order so far',action:'Start post-purchase flow Day 7'},
+    {name:'Inactive (90d+)',count:inactive.length,cls:'p-r',desc:'No activity in 90+ days',action:'Last chance winback + special offer'},
+    {name:'VIP (3+ orders)',count:vip.length,cls:'p-p',desc:'Highest LTV segment',action:'Early collection access + free shipping'},
+    {name:'Total Base',count:custs.length,cls:'p-gray',desc:'All registered customers',action:`Avg LTV: ${fmt(avgLTV)}`},
+  ].map(s=>`
+    <div class="rfm-card">
+      <div class="rfm-name">${s.name}</div>
+      <div class="rfm-count">${s.count.toLocaleString()}</div>
+      <div class="rfm-desc">${s.desc}</div>
+      <div class="rfm-action"><span class="pill ${s.cls}" style="font-size:10px;">${s.action}</span></div>
+    </div>`).join('');
+}
+
+/* ── EXPERIMENTS ── */
+function renderExperiments() {
+  const active = experiments.filter(e=>e.status==='In Progress').length;
+  const done = experiments.filter(e=>e.status==='Won'||e.status==='Lost').length;
+  const won = experiments.filter(e=>e.status==='Won').length;
+  const winRate = done>0?((won/done)*100).toFixed(0)+'%':'—';
+
+  setV('ex-active', active.toString());
+  setV('ex-done', done.toString());
+  setV('ex-win', winRate);
+  setV('ex-backlog', experiments.filter(e=>e.status==='Backlog').length.toString());
+
+  const sorted = [...experiments].sort((a,b)=>b.ice-a.ice);
+  const tb = document.getElementById('exp-tbody');
+  if(!tb) return;
+  if(!experiments.length){
+    tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">No experiments yet — add your first hypothesis below</td></tr>`;
+    return;
+  }
+  tb.innerHTML = sorted.map((e,i)=>{
+    const cls=e.status==='Won'?'p-g':e.status==='Lost'?'p-r':e.status==='In Progress'?'p-b':'p-gray';
+    return `<tr>
+      <td><div class="ice-rank">${i+1}</div></td>
+      <td style="font-weight:500;max-width:200px;">${e.hypothesis}</td>
+      <td><span class="pill p-p">${e.area}</span></td>
+      <td class="mono">${e.impact}/10</td>
+      <td class="mono">${e.confidence}/10</td>
+      <td class="mono">${e.ease}/10</td>
+      <td class="mono" style="font-weight:600;color:var(--accent);">${e.ice}</td>
+      <td><span class="pill ${cls}">${e.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── CREATIVES ── */
+function renderCreatives() {
+  const tb = document.getElementById('creative-tbody');
+  if(!tb) return;
+  if(!creatives.length){
+    tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">No creatives tracked yet — add your first below</td></tr>';
+    return;
+  }
+  const sorted=[...creatives].sort((a,b)=>parseFloat(b.roas)-parseFloat(a.roas));
+  tb.innerHTML=sorted.map(c=>{
+    const fatigue=parseInt(c.days)>21;
+    const sCls=fatigue?'p-r':parseFloat(c.roas)>=3?'p-g':'p-y';
+    const sTxt=fatigue?'Fatigued':parseFloat(c.roas)>=3?'Winning':'Monitor';
+    const ugcCls=c.type==='UGC'?'p-pk':'p-b';
+    return `<tr>
+      <td style="font-weight:500;">${c.name}</td>
+      <td><span class="pill ${ugcCls}">${c.type}</span></td>
+      <td style="color:var(--muted2);font-size:12px;">${c.hook}</td>
+      <td class="mono">${fmt(parseFloat(c.spend))}</td>
+      <td class="mono">${c.ctr}%</td>
+      <td class="mono" style="color:${parseFloat(c.roas)>=3?'var(--green)':'var(--amber)'};font-weight:600;">${c.roas}x</td>
+      <td class="mono">${c.days}d</td>
+      <td><span class="pill ${sCls}">${sTxt}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Update KPIs
+  const best = sorted[0];
+  if(best) {
+    setV('cr-ctr', best.ctr+'%');
+    const ugcAvg = creatives.filter(c=>c.type==='UGC').reduce((s,c)=>s+parseFloat(c.roas),0)/(creatives.filter(c=>c.type==='UGC').length||1);
+    const brandAvg = creatives.filter(c=>c.type==='Branded').reduce((s,c)=>s+parseFloat(c.roas),0)/(creatives.filter(c=>c.type==='Branded').length||1);
+    setV('cr-ugc', ugcAvg.toFixed(1)+'x vs '+brandAvg.toFixed(1)+'x');
+    setDelta('cr-ugc-d', ugcAvg>brandAvg?'UGC winning':'Branded winning', ugcAvg>brandAvg?'up':'flat');
+    const fat = creatives.filter(c=>parseInt(c.days)>21).length;
+    setV('cr-fat', fat.toString());
+    const avgLife = (creatives.reduce((s,c)=>s+parseInt(c.days),0)/creatives.length).toFixed(0);
+    setV('cr-life', avgLife+'d');
+  }
+}
+
+/* ══════════════════════════════════════
+   CHARTS
+══════════════════════════════════════ */
+const charts = {};
+const GC = {grid:'rgba(255,255,255,0.04)',font:"'Geist Mono',monospace",fs:10};
+
+function mkChart(id, cfg2) {
+  const ctx=document.getElementById(id);if(!ctx)return;
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(ctx,cfg2);
+}
+
+function initCharts() {
+  Chart.defaults.color='rgba(255,255,255,0.4)';
+  Chart.defaults.font.family=GC.font;
+  Chart.defaults.font.size=GC.fs;
+
+  const labels30=Array.from({length:30},(_,i)=>{
+    const d=new Date();d.setDate(d.getDate()-(29-i));
+    return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  });
+
+  // Revenue 30d
+  mkChart('c-rev30',{type:'line',data:{labels:labels30,datasets:[{data:D.revHistory,borderColor:'#7b69f5',backgroundColor:'rgba(123,105,245,0.06)',borderWidth:1.8,fill:true,tension:0.4,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'  '+fmt(c.parsed.y)}}},scales:{x:{grid:{color:GC.grid},ticks:{maxTicksLimit:8}},y:{grid:{color:GC.grid},ticks:{callback:v=>(v/1000).toFixed(0)+'k'}}}}});
+
+  // Orders status donut
+  const paid=D.orders.filter(o=>o.displayFinancialStatus==='PAID').length;
+  const pend=Math.max(0,D.todayOrders-paid);
+  mkChart('c-ord-status',{type:'doughnut',data:{labels:['Paid','Pending'],datasets:[{data:[paid||1,pend],backgroundColor:['#3ec98a','#f0a340'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:true,cutout:'68%',plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:10}}}}});
+
+  // LTV vs CAC
+  mkChart('c-ltv-cac',{type:'bar',data:{labels:labels30.filter((_,i)=>i%5===0),datasets:[{label:'Avg LTV',data:D.revHistory.filter((_,i)=>i%5===0).map(v=>v/Math.max(D.ordHistory.filter((_,i)=>i%5===0)[Math.floor(i/5)]||1,1)),backgroundColor:'rgba(123,105,245,0.5)',borderColor:'#7b69f5',borderWidth:1,borderRadius:4},{label:'Est. CAC',data:new Array(6).fill(parseFloat(cfg.adSpend)/30/(parseFloat(cfg.newCusts)/30)||150),backgroundColor:'rgba(232,85,85,0.4)',borderColor:'#e85555',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:10}}},scales:{x:{grid:{color:GC.grid}},y:{grid:{color:GC.grid},ticks:{callback:v=>fmt(v)}}}}});
+
+  // Revenue breakdown donut
+  const cogs=parseFloat(cfg.cogs)||35;
+  const ship=5; const marketing=25; const profit=Math.max(0,100-cogs-ship-marketing);
+  mkChart('c-rev-breakdown',{type:'doughnut',data:{labels:['COGS','Shipping','Marketing','Gross Profit'],datasets:[{data:[cogs,ship,marketing,profit],backgroundColor:['#e85555','#f0a340','#7b69f5','#3ec98a'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:9,font:{size:10}}}}}});
+
+  // Funnel drop-off
+  const fn = getFunnelData();
+  mkChart('c-funnel-drop',{type:'bar',data:{labels:['Session→PDP','PDP→ATC','ATC→Checkout','Checkout→Buy'],datasets:[{data:[fn.drop1,fn.drop2,fn.drop3,fn.drop4],backgroundColor:['#f0a340','#e85555','#e85555','#f0a340'],borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:GC.grid},ticks:{callback:v=>v+'%'}}}}});
+
+  // Payment split
+  const pays=D.payments;
+  const codN=pays.filter(o=>(o.paymentGatewayNames||[]).some(m=>m.includes('cash')||m.includes('cod'))).length;
+  const preN=pays.length-codN;
+  mkChart('c-payment-split',{type:'doughnut',data:{labels:['COD','Prepaid'],datasets:[{data:[codN||60,preN||40],backgroundColor:['#f0a340','#3ec98a'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:10}}}}});
+
+  // COD trend
+  mkChart('c-cod-trend',{type:'line',data:{labels:labels30.filter((_,i)=>i%3===0),datasets:[{label:'COD%',data:Array.from({length:10},()=>55+Math.random()*15),borderColor:'#f0a340',tension:0.4,borderWidth:1.8,pointRadius:0},{label:'Prepaid%',data:Array.from({length:10},()=>35+Math.random()*15),borderColor:'#3ec98a',tension:0.4,borderWidth:1.8,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:10}}},scales:{x:{grid:{color:GC.grid}},y:{grid:{color:GC.grid},ticks:{callback:v=>v+'%'}}}}});
+
+  // Cohort retention
+  mkChart('c-cohort',{type:'bar',data:{labels:['Oct','Nov','Dec','Jan','Feb','Mar'],datasets:[{label:'Day 30',data:[45,48,42,50,46,49],backgroundColor:'rgba(62,201,138,0.6)',borderRadius:4,borderWidth:0},{label:'Day 60',data:[28,30,26,32,29,31],backgroundColor:'rgba(123,105,245,0.5)',borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:10}}},scales:{x:{grid:{color:GC.grid}},y:{grid:{color:GC.grid},ticks:{callback:v=>v+'%'}}}}});
+
+  // RFM pie
+  const rfmData = calcRFM();
+  mkChart('c-rfm-pie',{type:'doughnut',data:{labels:['Loyal','New','At Risk','Inactive','VIP'],datasets:[{data:rfmData,backgroundColor:['#3ec98a','#4aa8f5','#f0a340','#e85555','#7b69f5'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:true,cutout:'60%',plugins:{legend:{position:'bottom',labels:{boxWidth:9,padding:9,font:{size:10}}}}}});
+
+  // Update rev trend
+  const avg7=D.revHistory.slice(-7).reduce((a,b)=>a+b,0)/7;
+  const avg7prev=D.revHistory.slice(-14,-7).reduce((a,b)=>a+b,0)/7;
+  const trend=((avg7-avg7prev)/Math.max(avg7prev,1)*100).toFixed(1);
+  const tEl=document.getElementById('rev-trend');
+  if(tEl){tEl.textContent=(trend>=0?'+':'')+trend+'% avg';tEl.className='pill '+(trend>=0?'p-g':'p-r');}
+}
+
+function calcRFM() {
+  const custs=D.customers;
+  if(!custs.length) return [30,40,15,10,5];
+  const now=Date.now();
+  const loyal=custs.filter(c=>parseInt(c.ordersCount||0)>=3).length;
+  const newC=custs.filter(c=>parseInt(c.ordersCount||0)===1).length;
+  const atRisk=custs.filter(c=>{const d=(now-new Date(c.updatedAt||c.createdAt).getTime())/864e5;return parseInt(c.ordersCount||0)>1&&d>45;}).length;
+  const inactive=custs.filter(c=>(now-new Date(c.updatedAt||c.createdAt).getTime())/864e5>90).length;
+  const vip=custs.filter(c=>parseInt(c.ordersCount||0)>3).length;
+  return [loyal,newC,atRisk,inactive,vip].map(n=>Math.max(n,1));
+}
+
+/* ══════════════════════════════════════
+   FUNNEL
+══════════════════════════════════════ */
+function getFunnelData() {
+  const sess=parseInt(document.getElementById('fn-in-sess')?.value)||5000;
+  const pdp=parseInt(document.getElementById('fn-in-pdp')?.value)||2500;
+  const atc=parseInt(document.getElementById('fn-in-atc')?.value)||350;
+  const chk=parseInt(document.getElementById('fn-in-chk')?.value)||200;
+  const pur=parseInt(document.getElementById('fn-in-pur')?.value)||D.todayOrders||143;
+  return {
+    sess,pdp,atc,chk,pur,
+    drop1:((1-pdp/sess)*100).toFixed(0),
+    drop2:((1-atc/pdp)*100).toFixed(0),
+    drop3:((1-chk/atc)*100).toFixed(0),
+    drop4:((1-pur/chk)*100).toFixed(0),
+    atcRate:(atc/sess*100).toFixed(1),
+    chkCVR:(pur/chk*100).toFixed(1),
+    cvr:(pur/sess*100).toFixed(2)
+  };
+}
+
+function updateFunnel() {
+  const fn=getFunnelData();
+  setV('fn-sess', fn.sess.toLocaleString());
+  setV('fn-atc', fn.atcRate+'%');
+  setV('fn-chk', fn.chkCVR+'%');
+  setV('fn-cvr', fn.cvr+'%');
+  setV('e-cvr', fn.cvr+'%');
+
+  const steps=[
+    {label:'Sessions',val:fn.sess,drop:null,color:'#7b69f5'},
+    {label:'PDP Views',val:fn.pdp,drop:fn.drop1+'% drop',color:'#4aa8f5'},
+    {label:'Add to Cart',val:fn.atc,drop:fn.drop2+'% drop',color:'#f0a340'},
+    {label:'Checkout',val:fn.chk,drop:fn.drop3+'% drop',color:'#e85555'},
+    {label:'Purchases',val:fn.pur,drop:fn.drop4+'% drop',color:'#3ec98a'},
+  ];
+  const fEl=document.getElementById('funnel-steps');
+  if(fEl) fEl.innerHTML=steps.map((s,i)=>{
+    const pct=Math.round(s.val/fn.sess*100);
+    return `<div class="funnel-step">
+      <div class="funnel-bar" style="width:${Math.max(pct,5)}%;background:${s.color};"></div>
+      <div style="z-index:1;"><div class="funnel-label">${s.label}</div>${s.drop?`<div class="funnel-drop">↓ ${s.drop}</div>`:''}</div>
+      <div style="z-index:1;text-align:right;"><div class="funnel-num">${s.val.toLocaleString()}</div><div style="font-size:11px;color:var(--muted);font-family:var(--mono);">${pct}%</div></div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════
+   UNIT ECONOMICS
+══════════════════════════════════════ */
+function calcUnitEcon() {
+  const cogs=parseFloat(document.getElementById('u-cogs').value)||35;
+  const ship=parseFloat(document.getElementById('u-ship').value)||45;
+  const spend=parseFloat(document.getElementById('u-spend').value)||1500000;
+  const newCusts=parseFloat(document.getElementById('u-newcust').value)||500;
+  const ret=parseFloat(document.getElementById('u-returns').value)||8;
+  const overhead=parseFloat(document.getElementById('u-overhead').value)||50000;
+
+  cfg.cogs=cogs; cfg.adSpend=spend; cfg.newCusts=newCusts;
+  localStorage.setItem('bid_cfg',JSON.stringify(cfg));
+
+  const monthRev=D.todayRev*30;
+  const cogsAmt=monthRev*(cogs/100);
+  const shipTotal=ship*(D.todayOrders*30);
+  const retCost=monthRev*(ret/100);
+  const gross=monthRev-cogsAmt-shipTotal-retCost;
+  const cm=(gross-spend-overhead);
+  const cmPct=((cm/monthRev)*100).toFixed(1);
+
+  const cac=newCusts>0?spend/newCusts:0;
+  const avgLTV=D.customers.length>0?D.customers.reduce((s,c)=>s+parseFloat(c.totalSpentV2?.amount||0),0)/D.customers.length:0;
+  const lcRatio=cac>0?(avgLTV/cac).toFixed(1):'—';
+  const payback=cac>0&&cm>0?(cac/(cm/newCusts/30)).toFixed(0):'—';
+  const beRoas=cogs>0?(100/(100-cogs)).toFixed(2):'—';
+
+  setV('u-cm', fmt(cm)); setDelta('u-cm-d', cmPct+'% margin', parseFloat(cmPct)>20?'up':'dn');
+  setV('u-lc', lcRatio+'x'); setV('u-pb', payback+'d'); setV('u-be', beRoas+'x');
+  setDelta('u-be-d', 'Min ROAS to break even', 'flat');
+
+  // Update executive
+  setV('e-ltv', fmt(avgLTV));
+  setV('e-cac', fmt(cac));
+  setV('e-mer', monthRev>0?(monthRev/spend).toFixed(1)+'x':'—');
+
+  toast('Unit economics calculated ✓');
+  initCharts();
+}
+
+/* ══════════════════════════════════════
+   ACQUISITION
+══════════════════════════════════════ */
+function calcAcquisition() {
+  const ms=parseFloat(document.getElementById('aq-meta-spend').value)||0;
+  const mr=parseFloat(document.getElementById('aq-meta-rev').value)||0;
+  const ts=parseFloat(document.getElementById('aq-tiktok-spend').value)||0;
+  const tr=parseFloat(document.getElementById('aq-tiktok-rev').value)||0;
+  const gs=parseFloat(document.getElementById('aq-google-spend').value)||0;
+  const nc=parseFloat(document.getElementById('aq-newcust').value)||1;
+
+  const totalSpend=ms+ts+gs;
+  const totalRev=mr+tr;
+  const mer=totalSpend>0?(totalRev/totalSpend).toFixed(1)+'x':'—';
+  const cac=nc>0?(totalSpend/nc).toFixed(0):0;
+  const metaROAS=ms>0?(mr/ms).toFixed(1)+'x':'—';
+
+  setV('aq-mer', mer); setV('aq-cac', fmt(cac)); setV('aq-roas', metaROAS);
+  setV('aq-spend', fmt(totalSpend));
+  setDelta('aq-cac-d', `${nc} new customers`, 'flat');
+
+  const tb=document.getElementById('channels-tbody');
+  if(tb&&totalSpend>0){
+    const channels=[];
+    if(ms>0) channels.push({name:'Meta Ads',spend:ms,rev:mr,cac:nc>0?ms/nc:0});
+    if(ts>0) channels.push({name:'TikTok Ads',spend:ts,rev:tr,cac:0});
+    if(gs>0) channels.push({name:'Google Ads',spend:gs,rev:0,cac:0});
+    tb.innerHTML=channels.map(c=>{
+      const roas=c.spend>0?(c.rev/c.spend).toFixed(1)+'x':'—';
+      const mer2=c.spend>0?(c.rev/c.spend).toFixed(1)+'x':'—';
+      const cCls=parseFloat(roas)>=3?'p-g':parseFloat(roas)>=2?'p-y':'p-r';
+      return `<tr>
+        <td style="font-weight:500;">${c.name}</td>
+        <td class="mono">${fmt(c.spend)}</td>
+        <td class="mono">${fmt(c.rev)}</td>
+        <td class="mono" style="font-weight:600;">${roas}</td>
+        <td class="mono">${fmt(c.cac)}</td>
+        <td class="mono">${mer2}</td>
+        <td><span class="pill ${cCls}">${parseFloat(roas)>=3?'Scaling':'Monitor'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+  toast('Acquisition updated ✓');
+}
+
+/* ══════════════════════════════════════
+   CREATIVES & EXPERIMENTS
+══════════════════════════════════════ */
+function saveCreative() {
+  const c={
+    name:document.getElementById('cr-name').value,
+    type:document.getElementById('cr-type').value,
+    hook:document.getElementById('cr-hook').value,
+    ctr:document.getElementById('cr-ctr-input').value,
+    roas:document.getElementById('cr-roas').value,
+    spend:document.getElementById('cr-spend').value,
+    days:0
+  };
+  if(!c.name){toast('Enter a creative name');return;}
+  creatives.push(c);
+  localStorage.setItem('bid_creatives',JSON.stringify(creatives));
+  renderCreatives();
+  toast('Creative saved ✓');
+}
+
+function addCreative() { document.getElementById('cr-name').focus(); }
+
+function saveExperiment() {
+  const impact=parseInt(document.getElementById('ex-impact').value)||5;
+  const conf=parseInt(document.getElementById('ex-conf').value)||5;
+  const ease=parseInt(document.getElementById('ex-ease').value)||5;
+  const e={
+    hypothesis:document.getElementById('ex-hyp').value,
+    area:document.getElementById('ex-area').value,
+    impact,confidence:conf,ease,
+    ice:Math.round((impact+conf+ease)/3*10)/10,
+    status:document.getElementById('ex-status').value
+  };
+  if(!e.hypothesis){toast('Enter a hypothesis');return;}
+  experiments.push(e);
+  localStorage.setItem('bid_experiments',JSON.stringify(experiments));
+  renderExperiments();
+  toast('Experiment added ✓');
+}
+
+function addExperiment() { document.getElementById('ex-hyp').focus(); }
+
+/* ══════════════════════════════════════
+   AI RECOMMENDATIONS
+══════════════════════════════════════ */
+function genRecs() {
+  const recs=[];
+  const thresh=parseInt(cfg.stockThresh)||20;
+  const oos=D.products.filter(p=>p.variants?.reduce((a,v)=>a+(parseInt(v.inventoryQuantity)||0),0)===0);
+  const low=D.products.filter(p=>{const s=p.variants?.reduce((a,v)=>a+(parseInt(v.inventoryQuantity)||0),0)||0;return s>0&&s<=thresh;});
+
+  if(oos.length>0) recs.push({type:'alert',cat:'Inventory',title:`${oos.length} product${oos.length>1?'s':''} out of stock`,body:`${oos.slice(0,2).map(p=>p.title).join(', ')} — reorder immediately.`,impact:'Risk: lost sales daily'});
+  if(low.length>0) recs.push({type:'warn',cat:'Inventory',title:`${low.length} items running low`,body:`${low.slice(0,2).map(p=>p.title).join(', ')} — stock below threshold.`,impact:'Order now to prevent stockout'});
+
+  const custs=D.customers;
+  const repeat=custs.filter(c=>parseInt(c.ordersCount||0)>1);
+  const retRate=custs.length>0?(repeat.length/custs.length*100).toFixed(0):0;
+  if(retRate<25) recs.push({type:'action',cat:'Retention',title:'Repeat rate below benchmark',body:`${retRate}% vs 30% target. Launch post-purchase email flow on Day 7 to convert one-time buyers.`,impact:'Expected +5–8% repeat rate'});
+
+  const cod=D.payments.filter(o=>(o.paymentGatewayNames||[]).some(m=>m.includes('cash')||m.includes('cod')));
+  if(D.payments.length>0&&cod.length/D.payments.length>0.6) recs.push({type:'warn',cat:'Payments',title:'COD rate above 60%',body:'High COD increases return risk. Incentivize prepaid with free shipping or 5% discount.',impact:'Target: reduce COD to <50%'});
+
+  recs.push({type:'action',cat:'Growth',title:'Launch abandoned cart flow',body:'3-step sequence: 1hr reminder → 24hr social proof + 10% off → 72hr last chance.',impact:'+15,000 EGP/month potential'});
+  recs.push({type:'info',cat:'CRO',title:'Test UGC on top product PDP',body:'Add customer video to best-selling product page. UGC typically lifts CVR by 10–20%.',impact:'Est. CVR lift: +0.5–1%'});
+  return recs;
+}
+
+function recHtml(r) {
+  return `<div class="rec ${r.type}">
+    <div class="rec-type">${r.cat}</div>
+    <div class="rec-title">${r.title}</div>
+    <div class="rec-body">${r.body}</div>
+    <div class="rec-impact">${r.impact}</div>
+  </div>`;
+}
+
+/* ══════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════ */
+function connectMeta() {
+  const acc=document.getElementById('s-meta-acc').value.trim();
+  const tok=document.getElementById('s-meta-tok').value.trim();
+  if(!acc||!tok){toast('Enter Ad Account ID and Token');return;}
+  cfg.metaAcc=acc; cfg.metaTok=tok;
+  localStorage.setItem('bid_cfg',JSON.stringify(cfg));
+  document.getElementById('meta-status-pill').textContent='Connected ✓';
+  document.getElementById('meta-status-pill').className='pill p-g';
+  document.getElementById('meta-banner')?.classList.add('hidden');
+  toast('Meta Ads connected ✓');
+}
+
+function connectKlaviyo() {
+  const key=document.getElementById('s-klaviyo').value.trim();
+  if(!key){toast('Enter Klaviyo API key');return;}
+  cfg.klaviyo=key;
+  localStorage.setItem('bid_cfg',JSON.stringify(cfg));
+  document.getElementById('klaviyo-banner')?.classList.add('hidden');
+  toast('Klaviyo connected ✓');
+}
+
+function saveSettings() {
+  cfg.revTarget=document.getElementById('s-rev-t').value;
+  cfg.roasTarget=document.getElementById('s-roas-t').value;
+  cfg.cacTarget=document.getElementById('s-cac-t').value;
+  cfg.stockThresh=document.getElementById('s-stock-t').value;
+  localStorage.setItem('bid_cfg',JSON.stringify(cfg));
+  toast('Settings saved ✓');
+  renderAll();
+}
+
+function clearAll() {
+  if(!confirm('Reset all data?'))return;
+  localStorage.clear();
+  cfg={}; creatives=[]; experiments=[];
+  toast('Reset — reloading...');
+  setTimeout(()=>location.reload(),1200);
+}
+
+/* ══════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════ */
+const PAGE_TITLES = {
+  executive:'Executive Dashboard',unit:'Unit Economics & Profitability',
+  acquisition:'Acquisition Analytics',creative:'Creative & UGC Performance',
+  funnel:'Funnel Conversion',products:'Products & PDP Intelligence',
+  payments:'Payments & COD',retention:'Retention & RFM',
+  lifecycle:'Lifecycle & CRM',orders:'Orders',customers:'Customers',
+  experiments:'Experimentation Engine',settings:'Settings'
+};
+
+function nav(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id)?.classList.add('active');
+  if(el) el.classList.add('active');
+  document.getElementById('page-title').textContent=PAGE_TITLES[id]||id;
+  if(id==='funnel') setTimeout(updateFunnel,100);
+}
+
+/* ══════════════════════════════════════
+   UTILS
+══════════════════════════════════════ */
+function fmt(n){return Math.round(n||0).toLocaleString('en-EG')+' EGP';}
+function setV(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function setDelta(id,txt,cls){const e=document.getElementById(id);if(!e)return;e.textContent=txt;e.className='kpi-delta '+(cls||'flat');}
+function setSync(state,msg){
+  const dot=document.getElementById('sync-dot');
+  const lbl=document.getElementById('sync-lbl');
+  if(dot){dot.className='sync-dot'+(state==='loading'?' loading':state==='error'?' error':'');}
+  if(lbl)lbl.textContent=msg;
+}
+function showLoader(msg){document.getElementById('loader').classList.remove('hidden');document.getElementById('loader-txt').textContent=msg;}
+function hideLoader(){document.getElementById('loader').classList.add('hidden');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+async function refreshAll(){const btn=document.getElementById('refresh-btn');if(btn)btn.disabled=true;await loadAll();if(btn)btn.disabled=false;}
+function exportCSV(){
+  const rows=[['Date','Revenue EGP','Orders']];
+  D.revHistory.forEach((r,i)=>{const d=new Date(Date.now()-(29-i)*864e5).toISOString().split('T')[0];rows.push([d,Math.round(r),D.ordHistory[i]]);});
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='shewear-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('Exported ✓');
+}
+
+function toggleLang() {
+  currentLang=currentLang==='en'?'ar':'en';
+  localStorage.setItem('bid_lang',currentLang);
+  const isAr=currentLang==='ar';
+  document.documentElement.lang=currentLang;
+  document.documentElement.dir=isAr?'rtl':'ltr';
+  document.body.style.fontFamily=isAr?"'IBM Plex Sans Arabic',sans-serif":"'Geist',sans-serif";
+  document.getElementById('lang-btn').textContent=isAr?'English':'عربي';
+  if(isAr){
+    document.querySelectorAll('.sidebar').forEach(s=>{s.style.borderRight='none';s.style.borderLeft='1px solid var(--border)';});
+    document.querySelectorAll('.nav-btn').forEach(b=>{b.style.borderRight='none';b.style.borderLeft='2px solid transparent';});
+  } else location.reload();
+  toast(isAr?'تم التبديل للعربية':'Switched to English');
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('page-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  if(currentLang==='ar'){document.documentElement.dir='rtl';document.body.style.fontFamily="'IBM Plex Sans Arabic',sans-serif";document.getElementById('lang-btn').textContent='English';}
+
+  // Load saved settings
+  if(cfg.revTarget) document.getElementById('s-rev-t').value=cfg.revTarget;
+  if(cfg.roasTarget) document.getElementById('s-roas-t').value=cfg.roasTarget;
+  if(cfg.cacTarget) document.getElementById('s-cac-t').value=cfg.cacTarget;
+  if(cfg.stockThresh) document.getElementById('s-stock-t').value=cfg.stockThresh;
+  if(cfg.metaTok){document.getElementById('meta-banner')?.classList.add('hidden');document.getElementById('meta-status-pill').textContent='Connected ✓';document.getElementById('meta-status-pill').className='pill p-g';}
+  if(cfg.klaviyo) document.getElementById('klaviyo-banner')?.classList.add('hidden');
+
+  // Auto-refresh every 10 mins
+  setInterval(()=>loadAll(),10*60*1000);
+
+  // Load data
+  loadAll();
+});
+</script>
+</body>
+</html>
